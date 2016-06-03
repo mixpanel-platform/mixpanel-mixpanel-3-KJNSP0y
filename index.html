@@ -49,19 +49,7 @@
           script = $.trim(script);
           MP.api.custom_query(script, queryParams)
           .done(function(resp) {
-            var profiles = {};
-              _.each(resp, function(v,k) {
-                var props = {};
-                props = {Property: k, count: v};
-                properties[k] = {count: v};
-                json_object.push(props);
-              });
-              last_response = properties;
-               $('<div></div>').appendTo('body').MPTable({ // create table; try scrolling horizontally over demo below
-                  data: last_response,
-                  showPercentages: false,
-                  firstColHeader: 'Property'
-            });
+            last_response = resp;
             eventTable.MPTable('setData', resp);
             $('#csv_export').html("Export to CSV").prop("disabled",false);
           }).fail(function($xhr) {
