@@ -9,19 +9,25 @@
   <body class="mixpanel-platform-body">
     <div class="mixpanel-platform-section">
       <div id="propSelect" style="float: left;"></div>
+      <button disabled="true" style="float: right;" class="button button_primary" id="csv_export">Please Wait...</button>
       <div style="clear: both;"></div>
     </div>
     <div id="table"></div>
     <script>
       var propSelect;
+      var last_response = undefined;
       var eventTable  = $('#table').MPTable({
         showPercentages: false,
       });
       var options = {items: []};
+      
+      $("body").delegate( "#csv_export", "click", function() {
+          var csv = "data:text/csv;charset=utf-8," + json_to_csv.jsonToCSV(json_object);
+          window.open(encodeURI(csv));
+      });
 
       
        MP.api.query('/api/2.0/engage/properties/').done(function(json) {
-        console.log('got json\n', json.custom_events);
         _.each(json.results, function(v,k) {
           options.items.push({label: k, value: k});
         })
@@ -39,8 +45,21 @@
           script = $.trim(script);
           MP.api.custom_query(script, queryParams)
           .done(function(resp) {
-            console.log(resp);
+            var profiles = {};
+              _.each(resp, function(v,k) {
+                var props = {};
+                props = {Property: k, count: v};
+                properties[k] = {count: v};
+                json_object.push(props);
+              });
+              last_response = properties;
+               $('<div></div>').appendTo('body').MPTable({ // create table; try scrolling horizontally over demo below
+                  data: last_response,
+                  showPercentages: false,
+                  firstColHeader: 'Property'
+            });
             eventTable.MPTable('setData', resp);
+            $('#csv_export').html("Export to CSV").prop("disabled",false);
           }).fail(function($xhr) {
               var error = $xhr.request.responseText;
               var error_text = "Requst failed";
@@ -83,9 +102,13 @@
             return user.value.profiles && user.value.profiles.length >= 2;
           })
           .map(function(user) {
+            var profiles = {};
+            _.each(user.value.profiles, function(v,k) {
+              profiles[k] = v;
+            })
             return {
-              "Match Key" : user.key[0],
-              "Profiles" : user.value.profiles
+              "match_key" : user.key[0],
+              "profile" : profiles
             };
           })
         }
