@@ -8,43 +8,89 @@
   </head>
   <body class="mixpanel-platform-body">
     <div class="mixpanel-platform-section">
-      <div id="eventSelect" style="float: left;"></div>
-      <div id="by" class="mixpanel-platform-label" style="margin-left: 10px; display: none;">by</div>
       <div id="propSelect" style="float: left;"></div>
-      <div id="dateSelect" style="float: right;"></div>
       <div style="clear: both;"></div>
-      <div id="graph"></div>
     </div>
     <div id="table"></div>
     <script>
-      var eventSelect = $('#eventSelect').MPEventSelect();
-      var propSelect  = $('#propSelect').MPPropertySelect();
-      var dateSelect  = $('#dateSelect').MPDatepicker();
-      var eventGraph  = $('#graph').MPChart({chartType: 'line'});
       var eventTable  = $('#table').MPTable({
-        showPercentages: true,
-        firstColHeader: 'Event'
+        showPercentages: false,
       });
+      
+       MP.api.query('/api/2.0/engage/properties/').done(function(json) {
+            console.log('got json\n', json.custom_events);
 
-      var runQuery = function() {
-        var eventName = eventSelect.MPEventSelect('value'),
-            propName  = propSelect.MPPropertySelect('value'),
-            dateRange = dateSelect.MPDatepicker('value');
+        _.each(json.results, function(v,k) {
+          options.items.push({label: k, value: k});
+        })
+        propSelect = $('#propSelect').MPSelect(options);
+        propSelect.on('change', function(e, propName) {
+          runQuery(propName);
+        });
+      });
+    });
 
-        if (eventName) {
-          MP.api.segment(eventName, propName, dateRange).done(function(results) {
-            eventGraph.MPChart('setData', results);
-            eventTable.MPTable('setData', results);
+      var runQuery = function(propName) {
+        var propName  = propSelect.MPPropertySelect('value');
+
+       var queryParams = {
+            matchKey: propName
+          };
+          var script = $('#cq').html();
+          script = $.trim(script);
+          MP.api.custom_query(script, queryParams)
+          .done(function(resp) {
+            console.log(resp);
+            eventTable.MPTable('setData', resp);
+          }).fail(function($xhr) {
+              var error = $xhr.request.responseText;
+              var error_text = "Requst failed";
+              try {
+                  error_text = JSON.parse(error).error;
+              } catch (err) {
+                  error_text = $xhr.request.responseText;
+              }
           });
-        }
       };
-      eventSelect.on('change', function(e, eventName) {
-        propSelect.MPPropertySelect('setEvent', eventName);
-        $("#by").show();
-        runQuery();
-      });
       propSelect.on('change', runQuery);
-      dateSelect.on('change', runQuery);
+    </script>
+    <script type="text/cq" id="cq">
+        function main() {
+          var matchKey = params.matchKey;
+          return People()
+          .filter(function(user){
+            return user.properties[matchKey] || 
+            user.distinct_id == user.properties[matchKey] ||
+            user.distinct_id == encodeURIComponent(user.properties[matchKey]);
+          })
+          .map(function(user) {
+            return {
+              distinct_id : user.distinct_id,
+              match_key : user.properties[matchKey] ? 
+              user.properties[matchKey] : ((user.distinct_id == user.properties[matchKey] ||
+                user.distinct_id == encodeURIComponent(user.properties[matchKey])) ? user.distinct_id : "")
+            };
+          })
+          .groupBy(["match_key"], function(state, users) {
+            state = {holder:state, profiles: []}
+            _.each(state.holder, function(v) {
+                state.profiles.push(v.holder[0]);
+            });
+            _.each(users, function(v) {
+              state.holder.push(v.distinct_id);
+            });
+            return state;
+          })
+          .filter(function(user){
+            return user.value.profiles && user.value.profiles.length >= 2;
+          })
+          .map(function(user) {
+            return {
+              "Match Key" : user.key[0],
+              "Profiles" : user.value.profiles
+            };
+          })
+        }
     </script>
   </body>
 </html>
