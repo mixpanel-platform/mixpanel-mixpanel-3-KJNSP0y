@@ -16,6 +16,8 @@
       var eventTable  = $('#table').MPTable({
         showPercentages: false,
       });
+      var options = {items: []};
+
       
        MP.api.query('/api/2.0/engage/properties/').done(function(json) {
         console.log('got json\n', json.custom_events);
