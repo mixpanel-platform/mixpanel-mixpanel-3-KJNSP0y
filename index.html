@@ -18,8 +18,7 @@
       });
       
        MP.api.query('/api/2.0/engage/properties/').done(function(json) {
-            console.log('got json\n', json.custom_events);
-
+        console.log('got json\n', json.custom_events);
         _.each(json.results, function(v,k) {
           options.items.push({label: k, value: k});
         })
@@ -28,7 +27,6 @@
           runQuery(propName);
         });
       });
-    });
 
       var runQuery = function(propName) {
         var propName  = propSelect.MPPropertySelect('value');
