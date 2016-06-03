@@ -94,15 +94,12 @@
             return user.value.profiles && user.value.profiles.length >= 2;
           })
           .map(function(user) {
-            var profiles = {};
+            var duplicates = {match_key: user.key[0]};
             _.each(user.value.profiles, function(v,k) {
-              profiles[k] = v;
-            })
-            return {
-              "match_key" : user.key[0],
-              "profile" : profiles
-            };
-          })
+              duplicates["profile_" + k] = v;
+            });
+            return duplicates;
+          });
         }
     </script>
   </body>
