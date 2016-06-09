@@ -50,8 +50,12 @@
           script = $.trim(script);
           MP.api.custom_query(script, queryParams)
           .done(function(resp) {
-            last_response = resp;
-            eventTable.MPTable('setData', resp);
+            var properties = {};
+            _.each(resp, function(v,k) {
+              properties[k] = {count: v};
+            });
+            last_response = properties;
+            eventTable.MPTable('setData', last_response);
             $('#csv_export').html("Export to CSV").prop("disabled",false);
           }).fail(function($xhr) {
               var error = $xhr.request.responseText;
