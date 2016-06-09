@@ -99,7 +99,7 @@
           .map(function(user) {
             return {
               "Match Key" : user.key[0],
-              "Profiles" : user.value.profiles
+              "Profiles" : user.value.profiles.join("//n")
             };
           })
         }
