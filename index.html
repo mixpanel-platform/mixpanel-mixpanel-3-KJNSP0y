@@ -53,7 +53,7 @@
           .done(function(resp) {
             var properties = {};
             _.each(resp, function(v,k) {
-              properties[v.match_key] = {profiles: v.profiles};
+              properties[v.match_key] = v.profiles;
             });
             last_response = properties;
             eventTable.MPTable('setData', last_response);
