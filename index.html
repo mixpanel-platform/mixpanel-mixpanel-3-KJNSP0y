@@ -81,26 +81,27 @@
                 user.distinct_id == encodeURIComponent(user.properties[matchKey])) ? user.distinct_id : "")
             };
           })
-          .groupBy(["match_key"], function(state, users) {
-            state = {holder:state, profiles: []}
-            _.each(state.holder, function(v) {
-                state.profiles.push(v.holder[0]);
-            });
+          .groupBy(["match_key"], function(accums, users) {
+            var holder = {profiles: []};
+              _.each(accums, function(v) {
+                _.each(v.profiles, function(profile) {
+                  holder.profiles.push(profile);
+                });
+              });
             _.each(users, function(v) {
-              state.holder.push(v.distinct_id);
+              holder.profiles.push(v.distinct_id);
             });
-            return state;
+            return holder;
           })
           .filter(function(user){
             return user.value.profiles && user.value.profiles.length >= 2;
           })
           .map(function(user) {
-            var duplicates = {match_key: user.key[0]};
-            _.each(user.value.profiles, function(v,k) {
-              duplicates["profile_" + k] = v;
-            });
-            return duplicates;
-          });
+            return {
+              "Match Key" : user.key[0],
+              "Profiles" : user.value.profiles
+            };
+          })
         }
     </script>
   </body>
