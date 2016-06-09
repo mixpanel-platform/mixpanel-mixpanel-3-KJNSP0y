@@ -23,6 +23,7 @@
       var last_response = undefined;
       var eventTable  = $('#table').MPTable({
         showPercentages: false,
+        firstColHeader: 'Match_key'
       });
       var options = {items: []};
       
@@ -48,11 +49,11 @@
           };
           var script = $('#cq').html();
           script = $.trim(script);
-          MP.api.custom_query(script, queryParams)
+          MP.api.jql(script, queryParams)
           .done(function(resp) {
             var properties = {};
             _.each(resp, function(v,k) {
-              properties[k] = {count: v};
+              properties[v.match_key] = {profiles: v.profiles};
             });
             last_response = properties;
             eventTable.MPTable('setData', last_response);
@@ -101,9 +102,9 @@
             return user.value.profiles && user.value.profiles.length >= 2;
           })
           .map(function(user) {
-            var duplicates = {match_key: user.key[0]};
+            var duplicates = {match_key: user.key[0], profiles: {}};
             _.each(user.value.profiles, function(v,k) {
-              duplicates["profile_" + k] = v;
+              duplicates.profiles["profile_" + k] = v;
             });
             return duplicates;
           });
